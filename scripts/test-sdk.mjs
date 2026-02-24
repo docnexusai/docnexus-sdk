@@ -2,12 +2,11 @@
 /**
  * Test script for @docnexus/api-client (API Platform SDK).
  * Run: node scripts/test-sdk.mjs
- * Optional env: BASE_URL, API_KEY — if set, runs a live health check (and optional search).
+ * Optional env: API_KEY — if set, runs a live health check against SDK default URL.
  */
 
 import { call, createPlatformClient, ENDPOINT_REGISTRY, DocnexusClient } from "../dist/index.mjs";
 
-const BASE_URL = process.env.BASE_URL || "";
 const API_KEY = process.env.API_KEY || "";
 
 function assert(condition, message) {
@@ -27,7 +26,7 @@ assert(names.includes("api/query"), "api/query in registry");
 console.log("   Endpoint names:", names.join(", "));
 
 console.log("2. createPlatformClient...");
-const client = createPlatformClient({ baseUrl: "https://example.com", apiKey: "test-key" });
+const client = createPlatformClient({ apiKey: "test-key" });
 assert(typeof client.call === "function", "client.call exists");
 assert(Array.isArray(client.getEndpointNames()), "getEndpointNames returns array");
 console.log("   getEndpointNames():", client.getEndpointNames().length, "endpoints");
@@ -35,7 +34,7 @@ console.log("   getEndpointNames():", client.getEndpointNames().length, "endpoin
 console.log("3. call() with unknown endpoint throws...");
 let threw = false;
 try {
-  await call({ baseUrl: "https://example.com", apiKey: "x", endpointName: "invalid/path" });
+  await call({ apiKey: "x", endpointName: "invalid/path" });
 } catch (e) {
   threw = true;
   assert(e.message.includes("Unknown endpoint"), "error mentions unknown endpoint");
@@ -46,7 +45,6 @@ console.log("4. call() v5/profile/us/:npi without npi throws...");
 threw = false;
 try {
   await call({
-    baseUrl: "https://example.com",
     apiKey: "x",
     endpointName: "v5/profile/us/:npi",
     payload: {},
@@ -58,14 +56,13 @@ try {
 assert(threw, "call without npi threw");
 
 console.log("5. DocnexusClient instantiation...");
-const docClient = new DocnexusClient({ baseUrl: "https://example.com", apiKey: "x" });
+const docClient = new DocnexusClient({ apiKey: "x" });
 assert(docClient && typeof docClient.health === "function", "DocnexusClient has health method");
 
-if (BASE_URL && API_KEY) {
-  console.log("6. Live test (BASE_URL + API_KEY set)...");
+if (API_KEY) {
+  console.log("6. Live test (API_KEY set)...");
   try {
     const health = await call({
-      baseUrl: BASE_URL,
       apiKey: API_KEY,
       endpointName: "v5/health",
     });
@@ -74,7 +71,7 @@ if (BASE_URL && API_KEY) {
     console.log("   Live v5/health failed (expected if gateway not reachable):", e.message);
   }
 } else {
-  console.log("6. Skipping live test (set BASE_URL and API_KEY to run live check).");
+  console.log("6. Skipping live test (set API_KEY to run live check).");
 }
 
 console.log("\nAll checks passed.");

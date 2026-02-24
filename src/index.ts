@@ -1,19 +1,14 @@
 /**
  * DocNexus API client — use with API keys (Kong Key Auth) or Bearer JWT.
+ * Base URL for docnexus-link is stored in the package; client only provides apiKey.
  *
  * @example
- * // With Kong API key
- * const client = new DocnexusClient('https://kong.example.com/profile', 'dnx_key_xxx');
+ * const client = new DocnexusClient({ apiKey: 'dnx_key_xxx' });
  * const results = await client.search({ first_name: 'John', last_name: 'Doe', country: 'US' });
  * const profile = await client.getProfileByNpi('1234567890');
- *
- * @example
- * // With Bearer token (after login)
- * const client = new DocnexusClient('https://api.docnexus.ai');
- * await client.login('username', 'password');
- * const results = await client.search({ first_name: 'John', last_name: 'Doe' });
  */
 
+import { DOCNEXUS_LINK_BASE_URL } from "./config";
 import type {
   SearchParams,
   SearchResponse,
@@ -40,8 +35,6 @@ export type {
 const DEFAULT_VERSION = "v5";
 
 export interface DocnexusClientConfig {
-  /** Base URL (e.g. Kong gateway URL or docnexus-link origin). No trailing slash. */
-  baseUrl: string;
   /**
    * API key for Kong Key Auth. Sent as header `apikey: <key>`.
    * Omit if using only Bearer token (e.g. after login).
@@ -60,18 +53,11 @@ export class DocnexusClient {
   private bearerToken?: string;
   private fetchFn: typeof fetch;
 
-  constructor(config: string | DocnexusClientConfig) {
-    if (typeof config === "string") {
-      this.baseUrl = config.replace(/\/$/, "");
-      this.apiKey = undefined;
-      this.version = DEFAULT_VERSION;
-      this.fetchFn = globalThis.fetch;
-    } else {
-      this.baseUrl = config.baseUrl.replace(/\/$/, "");
-      this.apiKey = config.apiKey;
-      this.version = config.version ?? DEFAULT_VERSION;
-      this.fetchFn = config.fetch ?? globalThis.fetch;
-    }
+  constructor(config: DocnexusClientConfig = {}) {
+    this.baseUrl = DOCNEXUS_LINK_BASE_URL.replace(/\/$/, "");
+    this.apiKey = config.apiKey;
+    this.version = config.version ?? DEFAULT_VERSION;
+    this.fetchFn = config.fetch ?? globalThis.fetch;
   }
 
   /** Set API key (Kong). Sent as `apikey` header. */
