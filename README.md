@@ -8,7 +8,7 @@ JavaScript/TypeScript client and API Platform SDK for **DocNexus Link** (provide
 
 | Source | Command |
 |--------|--------|
-| **npm** | `npm install @docnexus/api-client` |
+| **npm** | `npm install @docnexusapi/api-client` |
 | **GitHub** | `npm install github:docnexusai/docnexus-sdk` |
 | **Local** | `npm install /path/to/docnexus-sdk` |
 
@@ -27,7 +27,7 @@ JavaScript/TypeScript client and API Platform SDK for **DocNexus Link** (provide
 ## Install
 
 ```bash
-npm install @docnexus/api-client
+npm install @docnexusapi/api-client
 ```
 
 Or from GitHub (same package):
@@ -41,7 +41,7 @@ npm install github:docnexusai/docnexus-sdk
 ## Quick start (API key)
 
 ```javascript
-import { createPlatformClient } from '@docnexus/api-client';
+import { createPlatformClient } from '@docnexusapi/api-client';
 
 const client = createPlatformClient({
   apiKey: 'dnx_your_api_key_here',
@@ -64,7 +64,7 @@ console.log(results.docnexus_results);
 Search for healthcare providers by name and optional filters.
 
 ```javascript
-import { call } from '@docnexus/api-client';
+import { call } from '@docnexusapi/api-client';
 
 const results = await call({
   apiKey: 'dnx_key_xxx',
@@ -86,7 +86,7 @@ console.log(results.docnexus_results);
 Fetch full profile (clinical trials, publications, payments, etc.) for a 10-digit NPI.
 
 ```javascript
-import { createPlatformClient } from '@docnexus/api-client';
+import { createPlatformClient } from '@docnexusapi/api-client';
 
 const client = createPlatformClient({
   apiKey: 'dnx_key_xxx',
@@ -104,7 +104,7 @@ console.log(profile.clinical_trials, profile.publications, profile.affiliations)
 Verify the gateway or docnexus-link service is up.
 
 ```javascript
-import { call } from '@docnexus/api-client';
+import { call } from '@docnexusapi/api-client';
 
 const health = await call({
   apiKey: 'dnx_key_xxx',
@@ -118,7 +118,7 @@ console.log(health.status);
 Run a query with filters and get a result set (e.g. type_1_npi, orgs, patient_volume).
 
 ```javascript
-import { call } from '@docnexus/api-client';
+import { call } from '@docnexusapi/api-client';
 
 const response = await call({
   apiKey: 'dnx_key_xxx',
@@ -142,7 +142,7 @@ console.log(response.data, response.pagination);
 Get the generated SQL for a query without executing it.
 
 ```javascript
-import { call } from '@docnexus/api-client';
+import { call } from '@docnexusapi/api-client';
 
 const { sql, pagination } = await call({
   apiKey: 'dnx_key_xxx',
@@ -160,7 +160,7 @@ console.log(sql);
 Build a QueryConfig from natural-language or form text (single or multiple output categories).
 
 ```javascript
-import { call } from '@docnexus/api-client';
+import { call } from '@docnexusapi/api-client';
 
 const single = await call({
   apiKey: 'dnx_key_xxx',
@@ -187,7 +187,7 @@ const multi = await call({
 Request an export file; the response is the raw file body (e.g. save to disk or stream).
 
 ```javascript
-import { call } from '@docnexus/api-client';
+import { call } from '@docnexusapi/api-client';
 import { writeFileSync } from 'fs';
 
 const response = await call({
@@ -216,7 +216,7 @@ Note: With the default `call()`, the response may be parsed as JSON if the serve
 Alternative to platform `call`: use the class for docnexus-link. Base URL is stored in the package; pass apiKey or use Bearer token after login.
 
 ```javascript
-import DocnexusClient from '@docnexus/api-client';
+import DocnexusClient from '@docnexusapi/api-client';
 
 const client = new DocnexusClient({
   apiKey: 'dnx_key_xxx',
@@ -236,7 +236,7 @@ const health = await client.health();
 Use app credentials to get a JWT and then call search/profile with the token (no API key required for those calls if the backend accepts JWT).
 
 ```javascript
-import DocnexusClient from '@docnexus/api-client';
+import DocnexusClient from '@docnexusapi/api-client';
 
 const client = new DocnexusClient({});
 const { access_token } = await client.login('your_username', 'your_password');
@@ -248,7 +248,7 @@ const results = await client.search({ first_name: 'Jane', last_name: 'Smith' });
 Inspect which endpoint names the SDK supports (useful for UI or validation).
 
 ```javascript
-import { createPlatformClient, ENDPOINT_REGISTRY } from '@docnexus/api-client';
+import { createPlatformClient, ENDPOINT_REGISTRY } from '@docnexusapi/api-client';
 
 const client = createPlatformClient({
   apiKey: 'dnx_key_xxx',
@@ -310,7 +310,7 @@ Payload shapes follow the backend: docnexus-link (first_name, last_name, npi, et
 
 ## Base URLs (package config)
 
-The SDK stores two base URLs in `src/config.ts`: `DOCNEXUS_LINK_BASE_URL` (for `v5/*` endpoints) and `ADVANCED_SEARCH_BASE_URL` (for `api/*` endpoints). Each request uses the appropriate URL; the client does not pass a base URL. To point at a different gateway, change these constants in the package and rebuild.
+The SDK stores two base URLs in `src/config.ts`: `DOCNEXUS_LINK_BASE_URL` (for `v5/*` endpoints, default: `https://kong-eff0a29fd0usbkc4r.kongcloud.dev/profile`) and `ADVANCED_SEARCH_BASE_URL` (for `api/*` endpoints, default: `https://kong-eff0a29fd0usbkc4r.kongcloud.dev/advanced`). Each request uses the appropriate URL; the client does not pass a base URL. To override at runtime (e.g. for testing), set env vars `DOCNEXUS_SDK_LINK_BASE_URL` and/or `DOCNEXUS_SDK_ADVANCED_SEARCH_BASE_URL`.
 
 ---
 
@@ -321,4 +321,4 @@ npm run build
 npm test
 ```
 
-Build outputs: `dist/index.js` (CJS), `dist/index.mjs` (ESM), `dist/index.d.ts` (types). Test runs unit checks and, if `API_KEY` is set, a live health check.
+Build outputs: `dist/index.js` (CJS), `dist/index.mjs` (ESM), `dist/index.d.ts` (types). Test runs unit checks and, if `API_KEY` is set, live calls to all three endpoint groups: v5/health, v5/search, v5/profile/us/:npi (Docnexus Link) and api/query (Advanced Search).

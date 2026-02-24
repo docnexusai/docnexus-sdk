@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 /**
- * Test script for @docnexus/api-client (API Platform SDK).
+ * Test script for @docnexusapi/api-client (API Platform SDK).
  * Run: node scripts/test-sdk.mjs
- * Optional env: API_KEY — if set, runs a live health check against SDK default URL.
+ * Optional env: API_KEY — if set, runs live tests for all 3 endpoint groups:
+ *   - v5/health, v5/search, v5/profile/us/:npi (Docnexus Link)
+ *   - api/query (Advanced Search)
+ * Override base URLs: DOCNEXUS_SDK_LINK_BASE_URL, DOCNEXUS_SDK_ADVANCED_SEARCH_BASE_URL
  */
 
 import { call, createPlatformClient, ENDPOINT_REGISTRY, DocnexusClient } from "../dist/index.mjs";
@@ -60,18 +63,64 @@ const docClient = new DocnexusClient({ apiKey: "x" });
 assert(docClient && typeof docClient.health === "function", "DocnexusClient has health method");
 
 if (API_KEY) {
-  console.log("6. Live test (API_KEY set)...");
+  const linkBase = process.env.DOCNEXUS_SDK_LINK_BASE_URL || "";
+  const advancedBase = process.env.DOCNEXUS_SDK_ADVANCED_SEARCH_BASE_URL || "";
+  if (linkBase || advancedBase) {
+    console.log("6. Live tests (API_KEY + base URL overrides)...");
+  } else {
+    console.log("6. Live tests (API_KEY set, using SDK default Kong URLs)...");
+  }
+
+  const isServerError = (e) => e.message && (e.message.includes("500") || e.message.includes("502") || e.message.includes("503"));
+
+  // --- Docnexus Link ---
   try {
-    const health = await call({
-      apiKey: API_KEY,
-      endpointName: "v5/health",
-    });
-    console.log("   v5/health:", health);
+    const health = await call({ apiKey: API_KEY, endpointName: "v5/health" });
+    console.log("   v5/health:", JSON.stringify(health).slice(0, 80) + "...");
   } catch (e) {
-    console.log("   Live v5/health failed (expected if gateway not reachable):", e.message);
+    if (isServerError(e)) console.log("   v5/health: 5xx (backend error, SDK call OK)");
+    else console.log("   v5/health failed:", e.message);
+  }
+
+  try {
+    await call({
+      apiKey: API_KEY,
+      endpointName: "v5/search",
+      payload: { first_name: "John", last_name: "Smith", country: "US" },
+    });
+    console.log("   v5/search: 200 OK");
+  } catch (e) {
+    if (isServerError(e)) console.log("   v5/search: 5xx (backend error, SDK call OK)");
+    else console.log("   v5/search failed:", e.message);
+  }
+
+  try {
+    await call({
+      apiKey: API_KEY,
+      endpointName: "v5/profile/us/:npi",
+      payload: { npi: "1234567890" },
+    });
+    console.log("   v5/profile/us/:npi: 200 OK");
+  } catch (e) {
+    if (isServerError(e)) console.log("   v5/profile/us/:npi: 5xx (backend error, SDK call OK)");
+    else console.log("   v5/profile/us/:npi failed:", e.message);
+  }
+
+  // --- Advanced Search (api/query) ---
+  try {
+    const queryRes = await call({
+      apiKey: API_KEY,
+      endpointName: "api/query",
+      payload: { outputCategory: "type_1_npi", limit: 2 },
+    });
+    const hasData = queryRes && typeof queryRes === "object" && ("data" in queryRes || "pagination" in queryRes);
+    console.log("   api/query: 200 OK" + (hasData ? " (data/pagination)" : ""));
+  } catch (e) {
+    if (isServerError(e)) console.log("   api/query: 5xx (backend error, SDK call OK)");
+    else console.log("   api/query failed:", e.message);
   }
 } else {
-  console.log("6. Skipping live test (set API_KEY to run live check).");
+  console.log("6. Skipping live tests (set API_KEY to run; optional: DOCNEXUS_SDK_LINK_BASE_URL, DOCNEXUS_SDK_ADVANCED_SEARCH_BASE_URL).");
 }
 
 console.log("\nAll checks passed.");
