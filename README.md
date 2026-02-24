@@ -7,7 +7,7 @@ JavaScript/TypeScript client for the DocNexus API, for use with **API keys** (Ko
 ```bash
 npm install @docnexus/api-client
 # or install from GitHub (API key platform)
-npm install github:docnexus/docnexus-sdk
+npm install github:docnexusai/docnexus-sdk
 # or from local path
 npm install ./docnexus-sdk
 ```
